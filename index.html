@@ -1,0 +1,611 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockPilot | Hardware Inventory Demo</title>
+<style>
+:root {
+  --navy: #14233d;
+  --blue: #2563eb;
+  --light: #f4f7fb;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #e5eaf2;
+  --green: #15803d;
+  --amber: #b45309;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  color: var(--text);
+  background: var(--light);
+}
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 235px; flex-shrink: 0; background: var(--navy);
+  color: white; padding: 25px 16px; display: flex; flex-direction: column;
+}
+.brand { display:flex; gap:11px; align-items:center; padding:0 10px 30px; }
+.brand-icon {
+  background:#2563eb; border-radius:10px; width:39px; height:39px;
+  display:grid; place-items:center; font-size:23px;
+}
+.brand h2 { margin:0; font-size:20px; }
+.brand small { color:#aebed4; font-size:11px; }
+.nav-label {
+  color:#8294b0; font-size:10px; font-weight:700;
+  letter-spacing:1.5px; padding:10px 12px;
+}
+.nav-btn {
+  border:0; color:#cbd5e1; background:transparent; width:100%;
+  text-align:left; padding:13px 12px; border-radius:9px;
+  margin:3px 0; display:flex; gap:12px; align-items:center;
+}
+.nav-btn:hover, .nav-btn.active { background:#263b5d; color:white; }
+.nav-btn.active { box-shadow:inset 3px 0 #60a5fa; }
+.sidebar-bottom { margin-top:auto; color:#aebed4; font-size:12px; padding:16px 10px 0; }
+.main { flex:1; min-width:0; }
+.topbar {
+  background:white; padding:18px 30px; display:flex;
+  justify-content:space-between; align-items:center; gap:15px;
+  border-bottom:1px solid var(--border);
+}
+.topbar h2 { margin:0; font-size:19px; }
+.topbar p { margin:5px 0 0; color:var(--muted); font-size:12px; }
+.top-actions { display:flex; align-items:center; gap:12px; }
+.demo-tag {
+  background:#eff6ff; color:#1d4ed8; border-radius:20px;
+  padding:8px 12px; font-size:11px; font-weight:700;
+}
+.avatar {
+  width:36px; height:36px; border-radius:50%; background:#dbeafe;
+  color:#1d4ed8; display:grid; place-items:center; font-weight:700;
+}
+.content { padding:27px 30px; max-width:1600px; margin:auto; }
+.page-title {
+  display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; gap:12px; margin-bottom:22px;
+}
+.page-title h1 { margin:0; font-size:25px; letter-spacing:-.6px; }
+.page-title p { margin:6px 0 0; color:var(--muted); font-size:13px; }
+.btn {
+  border:0; background:var(--blue); color:white; border-radius:8px;
+  padding:10px 14px; font-weight:600; font-size:13px;
+}
+.btn:hover { background:#1d4ed8; }
+.btn.secondary { background:white; color:var(--text); border:1px solid var(--border); }
+.btn.danger { background:#fee2e2; color:#b91c1c; }
+.stats {
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px; margin-bottom:20px;
+}
+.card {
+  background:white; border:1px solid var(--border); border-radius:13px;
+  padding:19px; min-width:0;
+}
+.stat-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.stat-label { color:var(--muted); font-size:12px; }
+.stat-icon {
+  width:36px; height:36px; border-radius:10px; display:grid; place-items:center;
+  background:#eff6ff; color:#2563eb; font-size:19px;
+}
+.stat-number { font-size:26px; font-weight:750; margin-top:15px; letter-spacing:-.5px; }
+.stat-note { color:var(--muted); font-size:11px; margin-top:6px; }
+.green { color:var(--green); }
+.amber { color:var(--amber); }
+.dashboard-grid { display:grid; grid-template-columns:1.5fr 1fr; gap:18px; margin-bottom:20px; }
+.card-heading {
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; margin-bottom:18px;
+}
+.card-heading h3 { font-size:15px; margin:0; }
+.card-heading span { color:var(--muted); font-size:11px; }
+.chart { width:100%; height:190px; display:block; }
+.alert-list { display:flex; flex-direction:column; gap:15px; }
+.alert-item { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.product-mark {
+  width:36px; height:36px; display:grid; place-items:center;
+  border-radius:9px; background:#f1f5f9; font-size:18px; flex-shrink:0;
+}
+.alert-left { display:flex; gap:10px; align-items:center; min-width:0; }
+.alert-left strong { display:block; font-size:12px; }
+.alert-left small { display:block; color:var(--muted); margin-top:4px; font-size:10px; }
+.pill {
+  display:inline-block; border-radius:20px; padding:5px 8px;
+  font-size:10px; font-weight:700; white-space:nowrap;
+}
+.pill.low { background:#fff7ed; color:#c2410c; }
+.pill.ok { background:#dcfce7; color:#166534; }
+.pill.in { background:#dcfce7; color:#166534; }
+.pill.out { background:#fee2e2; color:#b91c1c; }
+.pill.sale { background:#dbeafe; color:#1d4ed8; }
+.section { display:none; }
+.section.active { display:block; }
+.table-card { background:white; border:1px solid var(--border); border-radius:13px; overflow:hidden; }
+.table-top {
+  padding:18px 20px; display:flex; justify-content:space-between;
+  align-items:center; flex-wrap:wrap; gap:12px;
+}
+.table-top h3 { margin:0; font-size:15px; }
+.search {
+  padding:10px 12px; border:1px solid var(--border); border-radius:8px;
+  background:white; width:230px; max-width:100%; outline:none; font-size:12px;
+}
+.search:focus, input:focus, select:focus { border-color:#60a5fa; outline:2px solid #dbeafe; }
+.table-wrap { overflow-x:auto; }
+table { border-collapse:collapse; width:100%; white-space:nowrap; }
+th {
+  background:#f8fafc; text-align:left; padding:13px 19px; color:var(--muted);
+  font-size:10px; text-transform:uppercase; letter-spacing:.5px;
+}
+td { padding:14px 19px; border-top:1px solid #eef2f7; font-size:12px; }
+tbody tr:hover { background:#fafcff; }
+.product-cell { display:flex; gap:10px; align-items:center; }
+.product-cell strong { display:block; font-size:12px; }
+.product-cell small { color:var(--muted); font-size:10px; display:block; margin-top:3px; }
+.actions { display:flex; gap:7px; }
+.mini-btn {
+  border:1px solid var(--border); background:white; border-radius:6px;
+  padding:6px 8px; font-size:11px; color:var(--text);
+}
+.mini-btn:hover { background:#eff6ff; }
+.toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.field { display:flex; flex-direction:column; gap:6px; }
+.field label { font-size:12px; font-weight:600; }
+.field input, .field select {
+  width:100%; border:1px solid var(--border); border-radius:8px;
+  padding:11px; background:white; color:var(--text);
+}
+.field.full { grid-column:1/-1; }
+.modal-backdrop {
+  display:none; position:fixed; inset:0; background:#0f172a99;
+  z-index:10; align-items:center; justify-content:center; padding:15px;
+}
+.modal-backdrop.open { display:flex; }
+.modal {
+  width:100%; max-width:490px; background:white; border-radius:15px;
+  padding:24px; max-height:90vh; overflow:auto;
+}
+.modal h2 { margin:0 0 6px; font-size:20px; }
+.modal p { color:var(--muted); font-size:12px; margin:0 0 20px; }
+.modal-actions { display:flex; justify-content:flex-end; gap:9px; margin-top:20px; }
+.notice {
+  background:#eff6ff; color:#1e40af; border:1px solid #dbeafe;
+  border-radius:9px; padding:12px 14px; font-size:12px; margin-bottom:18px;
+}
+.empty { text-align:center; padding:30px; color:var(--muted); }
+.report-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; margin-bottom:20px; }
+.mobile-menu { display:none; }
+footer { text-align:center; color:#94a3b8; padding:25px; font-size:11px; }
+@media(max-width:1000px) {
+  .sidebar { width:200px; }
+  .content { padding:22px 18px; }
+  .topbar { padding:16px 18px; }
+  .stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .dashboard-grid { grid-template-columns:1fr; }
+}
+@media(max-width:650px) {
+  .layout { display:block; }
+  .sidebar { display:none; width:100%; }
+  .sidebar.mobile-open { display:flex; }
+  .sidebar-bottom { margin-top:20px; }
+  .topbar { padding:14px; }
+  .topbar h2 { font-size:16px; }
+  .demo-tag { display:none; }
+  .content { padding:20px 12px; }
+  .page-title h1 { font-size:22px; }
+  .stats { gap:10px; }
+  .card { padding:14px; }
+  .stat-number { font-size:22px; }
+  .report-cards { grid-template-columns:1fr; }
+  .form-grid { grid-template-columns:1fr; }
+  .field.full { grid-column:auto; }
+  .mobile-menu { display:inline-block; }
+  .search { width:100%; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-icon">▦</div>
+      <div><h2>StockPilot</h2><small>HARDWARE INVENTORY</small></div>
+    </div>
+    <div class="nav-label">WORKSPACE</div>
+    <button class="nav-btn active" data-page="dashboard">▦ &nbsp; Dashboard</button>
+    <button class="nav-btn" data-page="products">▤ &nbsp; Products</button>
+    <button class="nav-btn" data-page="movements">⇄ &nbsp; Stock Movements</button>
+    <button class="nav-btn" data-page="sales">＄ &nbsp; Record a Sale</button>
+    <button class="nav-btn" data-page="reports">▥ &nbsp; Sales Reports</button>
+    <div class="sidebar-bottom">
+      <div>● Demo environment</div>
+      <p>StockPilot Inventory v1.0</p>
+      <p>Built for small hardware shops</p>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn secondary mobile-menu" id="mobileMenu">☰</button>
+        <div>
+          <h2>Hardware Shop Manager</h2>
+          <p>Mutare, Zimbabwe · Inventory workspace</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="demo-tag">DEMO DATA ONLY</span>
+        <div class="avatar">HM</div>
+      </div>
+    </header>
+
+    <div class="content">
+      <section class="section active" id="dashboard">
+        <div class="page-title">
+          <div><h1>Inventory Dashboard</h1><p>Here's an overview of your hardware shop.</p></div>
+          <button class="btn" onclick="openProductModal()">＋ Add Product</button>
+        </div>
+        <div class="notice">ⓘ This is a demonstration system. Products and sales are sample records saved only in this browser.</div>
+        <div class="stats">
+          <div class="card">
+            <div class="stat-head"><span class="stat-label">Total Products</span><span class="stat-icon">▤</span></div>
+            <div class="stat-number" id="totalProducts">0</div>
+            <div class="stat-note">Unique products in catalogue</div>
+          </div>
+          <div class="card">
+            <div class="stat-head"><span class="stat-label">Stock Value</span><span class="stat-icon">＄</span></div>
+            <div class="stat-number" id="stockValue">$0.00</div>
+            <div class="stat-note">Quantity × buying price</div>
+          </div>
+          <div class="card">
+            <div class="stat-head"><span class="stat-label">Today's Sales</span><span class="stat-icon">↗</span></div>
+            <div class="stat-number" id="todaySales">$0.00</div>
+            <div class="stat-note">Recorded sales today</div>
+          </div>
+          <div class="card">
+            <div class="stat-head"><span class="stat-label">Low Stock Items</span><span class="stat-icon" style="background:#fff7ed;color:#c2410c">⚠</span></div>
+            <div class="stat-number amber" id="lowStockCount">0</div>
+            <div class="stat-note">Products at or below reorder level</div>
+          </div>
+        </div>
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-heading"><h3>Sales Overview</h3><span>Last 7 days · USD</span></div>
+            <svg class="chart" id="salesChart" viewBox="0 0 600 210" preserveAspectRatio="none" aria-label="Sales chart"></svg>
+          </div>
+          <div class="card">
+            <div class="card-heading"><h3>Low Stock Alerts</h3><span id="alertTotal">0 items</span></div>
+            <div class="alert-list" id="lowStockList"></div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-top"><h3>Recent Stock Movements</h3><button class="btn secondary" onclick="showPage('movements')">View All →</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Product</th><th>Movement</th><th>Quantity</th><th>Current Stock</th><th>Date</th></tr></thead><tbody id="recentMovements"></tbody></table></div>
+        </div>
+      </section>
+
+      <section class="section" id="products">
+        <div class="page-title"><div><h1>Products</h1><p>Manage your hardware products and stock levels.</p></div><button class="btn" onclick="openProductModal()">＋ Add Product</button></div>
+        <div class="table-card">
+          <div class="table-top"><h3>Product Catalogue</h3><input id="productSearch" class="search" placeholder="Search products or SKU..."></div>
+          <div class="table-wrap"><table><thead><tr><th>Product</th><th>Category</th><th>Quantity</th><th>Buy Price</th><th>Sell Price</th><th>Status</th><th>Actions</th></tr></thead><tbody id="productsTable"></tbody></table></div>
+        </div>
+      </section>
+
+      <section class="section" id="movements">
+        <div class="page-title"><div><h1>Stock Movements</h1><p>Track every stock-in and stock-out transaction.</p></div><button class="btn" onclick="openMovementModal()">＋ Record Movement</button></div>
+        <div class="table-card">
+          <div class="table-top"><h3>Movement History</h3><span class="stat-label">Newest first</span></div>
+          <div class="table-wrap"><table><thead><tr><th>Product</th><th>Type</th><th>Quantity</th><th>Stock After</th><th>Date & Time</th></tr></thead><tbody id="movementsTable"></tbody></table></div>
+        </div>
+      </section>
+
+      <section class="section" id="sales">
+        <div class="page-title"><div><h1>Record a Sale</h1><p>Record a customer purchase and update stock automatically.</p></div></div>
+        <div class="card" style="max-width:650px">
+          <div class="card-heading"><h3>New Sales Transaction</h3><span>Demo checkout</span></div>
+          <form id="saleForm">
+            <div class="form-grid">
+              <div class="field full"><label for="saleProduct">Select product</label><select id="saleProduct" required></select></div>
+              <div class="field"><label for="saleQty">Quantity sold</label><input id="saleQty" type="number" min="1" step="1" value="1" required></div>
+              <div class="field"><label for="salePayment">Payment method</label><select id="salePayment"><option>Cash</option><option>EcoCash</option><option>Card</option><option>Bank transfer</option></select></div>
+              <div class="field full"><label for="saleCustomer">Customer / reference (optional)</label><input id="saleCustomer" placeholder="e.g. Walk-in customer"></div>
+            </div>
+            <div style="background:#f8fafc;padding:16px;border-radius:9px;margin-top:18px">
+              <div style="display:flex;justify-content:space-between;font-size:13px"><span>Unit selling price</span><strong id="unitPrice">$0.00</strong></div>
+              <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:17px"><span>Total</span><strong id="saleTotal">$0.00</strong></div>
+            </div>
+            <button class="btn" type="submit" style="width:100%;margin-top:17px">Complete Demo Sale</button>
+          </form>
+        </div>
+        <div class="table-card" style="margin-top:20px">
+          <div class="table-top"><h3>Recent Sales</h3></div>
+          <div class="table-wrap"><table><thead><tr><th>Reference</th><th>Product</th><th>Quantity</th><th>Total</th><th>Payment</th><th>Date</th></tr></thead><tbody id="salesTable"></tbody></table></div>
+        </div>
+      </section>
+
+      <section class="section" id="reports">
+        <div class="page-title"><div><h1>Sales Reports</h1><p>Review sales performance for the selected period.</p></div><button class="btn secondary" onclick="exportSales()">↓ Export Sales CSV</button></div>
+        <div class="report-cards">
+          <div class="card"><div class="stat-label">Total Sales</div><div class="stat-number" id="reportSales">$0.00</div><div class="stat-note">All recorded demo transactions</div></div>
+          <div class="card"><div class="stat-label">Units Sold</div><div class="stat-number" id="reportUnits">0</div><div class="stat-note">Across recorded sales</div></div>
+          <div class="card"><div class="stat-label">Estimated Gross Profit</div><div class="stat-number green" id="reportProfit">$0.00</div><div class="stat-note">Sales less product buying cost</div></div>
+        </div>
+        <div class="table-card">
+          <div class="table-top"><h3>Sales Breakdown by Product</h3></div>
+          <div class="table-wrap"><table><thead><tr><th>Product</th><th>Units Sold</th><th>Revenue</th><th>Estimated Profit</th></tr></thead><tbody id="reportTable"></tbody></table></div>
+        </div>
+        <p class="stat-note" style="margin-top:15px">Reports are calculated from sales entered in this browser. They are not audited financial statements.</p>
+      </section>
+      <footer>StockPilot Inventory Demo · Sample data only · Not a live business system</footer>
+    </div>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="productModal">
+  <div class="modal">
+    <h2>Add a Product</h2><p>Enter the details for a hardware product.</p>
+    <form id="productForm">
+      <div class="form-grid">
+        <div class="field full"><label>Product name</label><input name="name" required placeholder="e.g. Portland Cement 32.5N"></div>
+        <div class="field"><label>SKU / Code</label><input name="sku" required placeholder="e.g. CEM-001"></div>
+        <div class="field"><label>Category</label><select name="category"><option>Cement & Building</option><option>Plumbing</option><option>Electrical</option><option>Tools</option><option>Paint</option><option>Roofing</option><option>Other</option></select></div>
+        <div class="field"><label>Opening quantity</label><input name="qty" type="number" min="0" step="1" required value="0"></div>
+        <div class="field"><label>Low-stock threshold</label><input name="reorder" type="number" min="0" step="1" required value="5"></div>
+        <div class="field"><label>Buying price ($)</label><input name="buy" type="number" min="0" step="0.01" required></div>
+        <div class="field"><label>Selling price ($)</label><input name="sell" type="number" min="0" step="0.01" required></div>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn secondary" onclick="closeModals()">Cancel</button><button class="btn" type="submit">Save Product</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="movementModal">
+  <div class="modal">
+    <h2>Record Stock Movement</h2><p>Record incoming stock or a manual stock reduction.</p>
+    <form id="movementForm">
+      <div class="form-grid">
+        <div class="field full"><label>Product</label><select id="movementProduct" required></select></div>
+        <div class="field"><label>Movement type</label><select id="movementType"><option value="in">Stock In</option><option value="out">Stock Out</option></select></div>
+        <div class="field"><label>Quantity</label><input id="movementQty" type="number" min="1" step="1" required value="1"></div>
+        <div class="field full"><label>Reference / notes</label><input id="movementNote" placeholder="e.g. Supplier delivery"></div>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn secondary" onclick="closeModals()">Cancel</button><button class="btn" type="submit">Save Movement</button></div>
+    </form>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const money = n => '$' + Number(n || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const today = () => new Date().toISOString().slice(0,10);
+const dateLabel = d => new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+const dateTime = d => new Date(d).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const initialProducts = [
+ {id:1,name:'Portland Cement 32.5N',sku:'CEM-001',category:'Cement & Building',qty:24,reorder:10,buy:8.50,sell:10.00,icon:'🧱'},
+ {id:2,name:'PVC Pipe 20mm',sku:'PLB-002',category:'Plumbing',qty:6,reorder:12,buy:2.20,sell:3.50,icon:'🔧'},
+ {id:3,name:'Door Lock Set',sku:'TLS-003',category:'Tools',qty:38,reorder:8,buy:5.00,sell:7.50,icon:'🔐'},
+ {id:4,name:'Roofing Nails 3 inch',sku:'ROF-004',category:'Roofing',qty:3,reorder:8,buy:3.00,sell:4.50,icon:'🔩'},
+ {id:5,name:'Interior Wall Paint 5L',sku:'PNT-005',category:'Paint',qty:17,reorder:5,buy:12.00,sell:16.00,icon:'🎨'},
+ {id:6,name:'Electrical Cable 2.5mm',sku:'ELC-006',category:'Electrical',qty:45,reorder:10,buy:1.20,sell:1.80,icon:'💡'},
+ {id:7,name:'Tap Connector',sku:'PLB-007',category:'Plumbing',qty:4,reorder:10,buy:1.00,sell:1.75,icon:'🚰'},
+ {id:8,name:'Builder Wheelbarrow',sku:'TLS-008',category:'Tools',qty:12,reorder:3,buy:28.00,sell:36.00,icon:'🛒'}
+];
+const daysAgo = n => {const d=new Date();d.setDate(d.getDate()-n);return d.toISOString();};
+const sampleMovements = [
+ {id:1,productId:1,type:'in',qty:20,after:24,note:'Supplier delivery',date:daysAgo(0)},
+ {id:2,productId:2,type:'out',qty:6,after:6,note:'Shop issue',date:daysAgo(0)},
+ {id:3,productId:3,type:'in',qty:12,after:38,note:'Supplier delivery',date:daysAgo(1)},
+ {id:4,productId:4,type:'out',qty:5,after:3,note:'Shop issue',date:daysAgo(1)}
+];
+const sampleSales = [
+ {id:'S-1001',productId:1,qty:5,total:50,payment:'Cash',customer:'Walk-in',date:daysAgo(0)},
+ {id:'S-1002',productId:3,qty:2,total:15,payment:'EcoCash',customer:'Walk-in',date:daysAgo(0)},
+ {id:'S-1003',productId:5,qty:1,total:16,payment:'Cash',customer:'Customer 03',date:daysAgo(1)},
+ {id:'S-1004',productId:6,qty:10,total:18,payment:'Cash',customer:'Walk-in',date:daysAgo(2)},
+ {id:'S-1005',productId:1,qty:3,total:30,payment:'Bank transfer',customer:'Builder',date:daysAgo(3)},
+ {id:'S-1006',productId:3,qty:4,total:30,payment:'Cash',customer:'Walk-in',date:daysAgo(4)},
+ {id:'S-1007',productId:5,qty:2,total:32,payment:'EcoCash',customer:'Walk-in',date:daysAgo(5)}
+];
+
+function load(key, fallback) {
+  try { const v=localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch(e) { return fallback; }
+}
+let products = load('stockpilot_products',initialProducts);
+let movements = load('stockpilot_movements',sampleMovements);
+let sales = load('stockpilot_sales',sampleSales);
+let nextId = Math.max(100,...products.map(p=>p.id))+1;
+
+function save() {
+  try {
+    localStorage.setItem('stockpilot_products',JSON.stringify(products));
+    localStorage.setItem('stockpilot_movements',JSON.stringify(movements));
+    localStorage.setItem('stockpilot_sales',JSON.stringify(sales));
+  } catch(e) { alert('Browser storage is unavailable. Changes may not persist.'); }
+}
+function product(id) { return products.find(p=>p.id===Number(id)); }
+function productName(id) { return product(id)?.name || 'Deleted product'; }
+function status(p) { return p.qty<=p.reorder ? '<span class="pill low">Low stock</span>' : '<span class="pill ok">In stock</span>'; }
+function emptyRow(cols,msg) { return `<tr><td colspan="${cols}" class="empty">${msg}</td></tr>`; }
+
+function showPage(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+  $('sidebar').classList.remove('mobile-open');
+  render();
+}
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+$('mobileMenu').addEventListener('click',()=>$('sidebar').classList.toggle('mobile-open'));
+
+function render() {
+  renderStats(); renderLowStock(); renderMovements(); renderProducts();
+  renderSales(); renderReports(); renderSaleOptions(); renderChart();
+}
+function renderStats() {
+  $('totalProducts').textContent=products.length;
+  $('stockValue').textContent=money(products.reduce((s,p)=>s+p.qty*p.buy,0));
+  $('todaySales').textContent=money(sales.filter(s=>s.date.slice(0,10)===today()).reduce((s,x)=>s+x.total,0));
+  $('lowStockCount').textContent=products.filter(p=>p.qty<=p.reorder).length;
+}
+function renderLowStock() {
+  const low=products.filter(p=>p.qty<=p.reorder);
+  $('alertTotal').textContent=low.length+' items';
+  $('lowStockList').innerHTML=low.length?low.slice(0,5).map(p=>`
+    <div class="alert-item"><div class="alert-left"><div class="product-mark">${p.icon||'📦'}</div>
+    <div><strong>${esc(p.name)}</strong><small>Reorder at ${p.reorder} · ${esc(p.sku)}</small></div></div>
+    <span class="pill low">${p.qty} left</span></div>`).join(''):'<div class="empty">All products are above reorder level.</div>';
+}
+function renderProducts() {
+  const q=($('productSearch')?.value||'').toLowerCase();
+  const list=products.filter(p=>(p.name+' '+p.sku+' '+p.category).toLowerCase().includes(q));
+  $('productsTable').innerHTML=list.length?list.map(p=>`<tr>
+    <td><div class="product-cell"><div class="product-mark">${p.icon||'📦'}</div><div><strong>${esc(p.name)}</strong><small>${esc(p.sku)}</small></div></div></td>
+    <td>${esc(p.category)}</td><td><strong>${p.qty}</strong></td><td>${money(p.buy)}</td><td>${money(p.sell)}</td><td>${status(p)}</td>
+    <td><div class="actions"><button class="mini-btn" onclick="quickMovement(${p.id},'in')">+ Stock</button><button class="mini-btn" onclick="quickMovement(${p.id},'out')">− Stock</button></div></td></tr>`).join(''):emptyRow(7,'No matching products.');
+}
+$('productSearch').addEventListener('input',renderProducts);
+
+function renderMovements() {
+  const sorted=[...movements].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const row=m=>`<tr><td>${esc(productName(m.productId))}</td><td><span class="pill ${m.type==='in'?'in':'out'}">${m.type==='in'?'Stock In':'Stock Out'}</span></td>
+  <td>${m.type==='in'?'+':'−'}${m.qty}</td><td>${m.after}</td><td>${dateTime(m.date)}</td></tr>`;
+  $('movementsTable').innerHTML=sorted.length?sorted.map(row).join(''):emptyRow(5,'No stock movements yet.');
+  $('recentMovements').innerHTML=sorted.length?sorted.slice(0,5).map(m=>`<tr><td>${esc(productName(m.productId))}</td><td><span class="pill ${m.type==='in'?'in':'out'}">${m.type==='in'?'Stock In':'Stock Out'}</span></td><td>${m.type==='in'?'+':'−'}${m.qty}</td><td>${m.after}</td><td>${dateLabel(m.date)}</td></tr>`).join(''):emptyRow(5,'No recent movements.');
+}
+function renderSaleOptions() {
+  const available=products.filter(p=>p.qty>0);
+  $('saleProduct').innerHTML=available.map(p=>`<option value="${p.id}">${esc(p.name)} — ${money(p.sell)} (${p.qty} in stock)</option>`).join('');
+  $('movementProduct').innerHTML=products.map(p=>`<option value="${p.id}">${esc(p.name)} (${p.qty} in stock)</option>`).join('');
+  updateSaleTotal();
+}
+function updateSaleTotal() {
+  const p=product($('saleProduct').value), qty=Math.max(0,Number($('saleQty').value)||0);
+  $('unitPrice').textContent=money(p?.sell||0);
+  $('saleTotal').textContent=money((p?.sell||0)*qty);
+}
+$('saleProduct').addEventListener('change',updateSaleTotal);
+$('saleQty').addEventListener('input',updateSaleTotal);
+
+function renderSales() {
+  const sorted=[...sales].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  $('salesTable').innerHTML=sorted.length?sorted.map(s=>`<tr><td><strong>${esc(s.id)}</strong></td><td>${esc(productName(s.productId))}</td><td>${s.qty}</td><td><strong>${money(s.total)}</strong></td><td>${esc(s.payment)}</td><td>${dateLabel(s.date)}</td></tr>`).join(''):emptyRow(6,'No sales recorded yet.');
+}
+function renderReports() {
+  const total=sales.reduce((s,x)=>s+x.total,0);
+  const units=sales.reduce((s,x)=>s+x.qty,0);
+  const profit=sales.reduce((s,x)=>s+x.total-x.qty*(product(x.productId)?.buy||0),0);
+  $('reportSales').textContent=money(total);
+  $('reportUnits').textContent=units;
+  $('reportProfit').textContent=money(profit);
+  $('reportTable').innerHTML=products.map(p=>{
+    const ps=sales.filter(s=>s.productId===p.id);
+    const qty=ps.reduce((s,x)=>s+x.qty,0), revenue=ps.reduce((s,x)=>s+x.total,0);
+    return `<tr><td>${esc(p.name)}</td><td>${qty}</td><td>${money(revenue)}</td><td>${money(revenue-qty*p.buy)}</td></tr>`;
+  }).join('')||emptyRow(4,'No products to report.');
+}
+
+function renderChart() {
+  const svg=$('salesChart'), days=[];
+  for(let i=6;i>=0;i--) {
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const key=d.toISOString().slice(0,10);
+    days.push({key,label:d.toLocaleDateString('en-US',{weekday:'short'}),value:sales.filter(s=>s.date.slice(0,10)===key).reduce((sum,s)=>sum+s.total,0)});
+  }
+  const max=Math.max(100,...days.map(d=>d.value))*1.2;
+  const pts=days.map((d,i)=>({x:35+i*87,y:160-(d.value/max)*125,...d}));
+  const path=pts.map((p,i)=>(i?'L':'M')+' '+p.x+' '+p.y).join(' ');
+  svg.innerHTML=`
+    <defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity=".22"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>
+    ${[35,75,115,155].map(y=>`<line x1="25" y1="${y}" x2="590" y2="${y}" stroke="#edf1f7" stroke-dasharray="4 4"/>`).join('')}
+    <path d="${path} L ${pts[pts.length-1].x} 165 L ${pts[0].x} 165 Z" fill="url(#area)"/>
+    <path d="${path}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    ${pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="white" stroke="#2563eb" stroke-width="2"><title>${p.label}: ${money(p.value)}</title></circle><text x="${p.x}" y="190" fill="#64748b" font-size="11" text-anchor="middle">${p.label}</text>`).join('')}
+  `;
+}
+
+function openProductModal() { $('productModal').classList.add('open'); }
+function openMovementModal() { renderSaleOptions(); $('movementModal').classList.add('open'); }
+function closeModals() { document.querySelectorAll('.modal-backdrop').forEach(m=>m.classList.remove('open')); }
+document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModals();}));
+function quickMovement(id,type) {
+  $('movementProduct').value=id; $('movementType').value=type;
+  $('movementQty').value=1; $('movementNote').value='';
+  openMovementModal();
+}
+
+$('productForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const f=new FormData(e.target), sku=String(f.get('sku')).trim();
+  if(products.some(p=>p.sku.toLowerCase()===sku.toLowerCase())) { alert('That SKU already exists. Use a unique product code.'); return; }
+  const p={id:nextId++,name:String(f.get('name')).trim(),sku,category:f.get('category'),
+    qty:Number(f.get('qty')),reorder:Number(f.get('reorder')),buy:Number(f.get('buy')),
+    sell:Number(f.get('sell')),icon:'📦'};
+  if(p.buy<0||p.sell<0||p.qty<0||p.reorder<0){alert('Values cannot be negative.');return;}
+  products.push(p);
+  if(p.qty>0) movements.push({id:Date.now(),productId:p.id,type:'in',qty:p.qty,after:p.qty,note:'Opening stock',date:new Date().toISOString()});
+  save(); e.target.reset(); closeModals(); render();
+  alert('Product added successfully.');
+});
+
+$('movementForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const p=product($('movementProduct').value),type=$('movementType').value,qty=Number($('movementQty').value);
+  if(!p||!Number.isInteger(qty)||qty<=0){alert('Enter a valid quantity.');return;}
+  if(type==='out'&&qty>p.qty){alert('Not enough stock. Current quantity: '+p.qty);return;}
+  p.qty += type==='in'?qty:-qty;
+  movements.push({id:Date.now(),productId:p.id,type,qty,after:p.qty,note:$('movementNote').value.trim(),date:new Date().toISOString()});
+  save(); e.target.reset(); closeModals(); render();
+  alert('Stock movement recorded.');
+});
+
+$('saleForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const p=product($('saleProduct').value),qty=Number($('saleQty').value);
+  if(!p){alert('Add a product with available stock first.');return;}
+  if(!Number.isInteger(qty)||qty<=0){alert('Enter a valid whole-number quantity.');return;}
+  if(qty>p.qty){alert('Insufficient stock. Only '+p.qty+' units are available.');return;}
+  const total=Math.round(p.sell*qty*100)/100;
+  p.qty-=qty;
+  sales.push({id:'S-'+Date.now().toString().slice(-7),productId:p.id,qty,total,payment:$('salePayment').value,
+    customer:$('saleCustomer').value.trim()||'Walk-in',date:new Date().toISOString()});
+  movements.push({id:Date.now()+1,productId:p.id,type:'out',qty,after:p.qty,note:'Sale',date:new Date().toISOString()});
+  save(); e.target.reset(); $('saleQty').value=1; render();
+  alert('Demo sale recorded. Stock has been updated.');
+});
+
+function exportSales() {
+  const rows=[['Reference','Product','Quantity','Total USD','Payment','Date']];
+  sales.forEach(s=>rows.push([s.id,productName(s.productId),s.qty,s.total,s.payment,dateLabel(s.date)]));
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const url=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));
+  const a=document.createElement('a');a.href=url;a.download='stockpilot-sales-report.csv';a.click();URL.revokeObjectURL(url);
+}
+
+// Demo reset: clear the browser's saved changes and restore sample data.
+const resetBtn=document.createElement('button');
+resetBtn.className='nav-btn';resetBtn.innerHTML='↻ &nbsp; Reset Demo Data';
+resetBtn.style.marginTop='10px';
+resetBtn.onclick=()=>{
+  if(confirm('Reset all demo changes and restore the original sample data?')) {
+    localStorage.removeItem('stockpilot_products');
+    localStorage.removeItem('stockpilot_movements');
+    localStorage.removeItem('stockpilot_sales');
+    location.reload();
+  }
+};
+$('sidebar').insertBefore(resetBtn,$('sidebar').lastElementChild);
+
+render();
+</script>
+</body>
+</html>
